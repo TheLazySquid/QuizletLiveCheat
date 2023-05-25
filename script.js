@@ -47,23 +47,25 @@
     pageChange();
 
     let shiftCount = 0;
-    let shiftTimeout = null;
-    document.addEventListener("keydown", (e) => {
-        if(e.key === "Shift"){
-            shiftCount++;
-            if(shiftTimeout) clearTimeout(shiftTimeout);
-            shiftTimeout = setTimeout(() => {
-                shiftCount = 0;
-            }, 1000);
-            if(shiftCount == 3) {
-                enabled = !enabled;
-                if(enabled) {
-                    console.log("Quizlet Live Cheat Enabled");
-                    pageChange();
-                }
-                else console.log("Quizlet Live Cheat Disabled");
-                shiftCount = 0;
-            }
+    let lastShiftTime = 0;
+
+    window.addEventListener("keydown", (e) => {
+        if (e.key !== "Shift") return;
+        const currentTime = new Date().getTime();
+        if (currentTime - lastShiftTime > 1000) {
+          shiftCount = 0;
         }
-    })
+        shiftCount++;
+        lastShiftTime = currentTime;
+        if (shiftCount === 3) {
+          enabled = !enabled;
+          if (enabled) {
+            console.log("Quizlet Live Cheat Enabled");
+            pageChange();
+          } else {
+            console.log("Quizlet Live Cheat Disabled");
+          }
+          shiftCount = 0;
+        }
+      });
 })();
