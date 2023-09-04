@@ -1,0 +1,34 @@
+{
+  "name": "quizletlive-cheat",
+  "version": "0.1.0",
+  "description": "A userscript that lets you cheat in Quizlet Live",
+  "main": "build/bundle.js",
+  "type": "module",
+  "scripts": {
+    "build": "rollup --config"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheLazySquid/QuizletLiveCheat.git"
+  },
+  "keywords": [
+    "QuizletLive"
+  ],
+  "author": "TheLazySquid",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TheLazySquid/QuizletLiveCheat/issues"
+  },
+  "homepage": "https://github.com/TheLazySquid/QuizletLiveCheat#readme",
+  "dependencies": {
+    "@rollup/plugin-commonjs": "^25.0.1",
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-typescript": "^11.1.1",
+    "@types/tampermonkey": "^4.0.10",
+    "rollup-plugin-string": "^3.0.0",
+    "rollup-plugin-userscript-metablock": "^0.3.3"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.7.2"
+  }
+}
