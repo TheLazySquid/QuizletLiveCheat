@@ -115,3 +115,11 @@ export interface QuizletWindow extends Window {
     }
     qlc?: Cheat;
 }
+
+export interface IHudInteract {
+    answerQuestion: (() => void) | undefined;
+    onHelpModeChange: ((mode: number) => void) | undefined;
+    onShowAnswerChange: ((showAnswer: boolean) => void) | undefined;
+    helpMode: number;
+    showAnswer: boolean;
+}

@@ -1,34 +1,142 @@
 import { Socket } from "socket.io-client";
-import { IGameState, IGameStateAndSet, INewAnswer, INewStreak, IQuizletStreak, QuizletWindow } from "./interfaces";
-import Hud from "./hud/hud";
+import type { IGameState, IGameStateAndSet, IHudInteract, INewAnswer, INewStreak, IQuizletStreak, IQuizletTerm, QuizletWindow } from "./interfaces";
 
 export default class Cheat {
     alreadyIntercepted: boolean = false;
     io?: Socket;
 
     hasPrompts: number[] = [];
+    terms: IQuizletTerm[] = [];
 
     currentPrompts: number[] = [];
     streakNumber: number = 0;
     roundNumber: number = 0;
+    promptKind: string = "definition";
 
-    hud: Hud;
+    hudInteract?: IHudInteract;
     
-    autoAnswering: boolean = false;
-
     constructor() {
-        this.hud = new Hud();
-
-        this.hud.addEventListener("answerOnce", () => {
-            this.answerQuestion();
-        })
-
-        this.hud.addEventListener("toggleAutoAnswer", () => {
-            this.autoAnswering = !this.autoAnswering;
-            this.answerQuestion();
-        })
-
         this.setupSocketGetting();
+        window.addEventListener('load', () => {
+            this.addUpdateObserver();
+        })
+    }
+
+    addHudInteract(hudInteract: IHudInteract) {
+        this.hudInteract = hudInteract;
+
+        this.hudInteract.answerQuestion = this.answerQuestion.bind(this);
+        this.hudInteract.onHelpModeChange = (mode: number) => {
+            if(mode == 3) {
+                // outline correct
+                this.addCorrectBorder();
+            } else {
+                this.removeCorrectBorder();
+            }
+        }
+        this.hudInteract.onShowAnswerChange = (showAnswer: boolean) => {
+            if(showAnswer) {
+                this.updateAnswerDisplay();
+            } else {
+                this.removeAnswerDisplay();
+            }
+        }
+    }
+
+    updateAnswerDisplay() {
+        let correctId = this.currentPrompts[this.roundNumber];
+        let cardInfo = this.terms.find(term => term.id == correctId);
+        if(!cardInfo) return;
+
+        // get the element to put the answer into
+        let promptDiv = document.querySelector(".StudentPrompt") as HTMLElement;
+        if(!promptDiv) return;
+
+        promptDiv.style.flexDirection = "column";
+
+        // TODO: this sucks
+        let answerEl = promptDiv.querySelector(".qlc-answer") as HTMLDivElement;
+        if(!answerEl) {
+            answerEl = document.createElement("div");
+            answerEl.classList.add("qlc-answer");
+        }
+
+        // clear the element
+        answerEl.innerHTML = "";
+        answerEl.style.display = "flex";
+        answerEl.style.alignItems = "center";
+        answerEl.style.border = "2px solid #18ab1d";
+        answerEl.style.borderRadius = "0.5rem";
+
+        if(this.promptKind == "definition") {
+            // set the text to the word
+            answerEl.innerHTML = `<div>${cardInfo.word}</div>`;
+        } else {
+            // set the text, image or both
+            if(cardInfo.definition != '') {
+                answerEl.innerHTML = `<div>${cardInfo.definition}</div>`;
+            }
+            if(cardInfo._imageUrl != null) {
+                let img = document.createElement("img");
+                img.style.marginLeft = "0.5rem";
+                img.style.borderRadius = "0.5rem";
+                img.src = cardInfo._imageUrl;
+                answerEl.appendChild(img);
+            }
+        }
+
+        // add the element to the page
+        promptDiv.appendChild(answerEl);
+    }
+
+    removeAnswerDisplay() {
+        let answerEl = document.querySelector(".qlc-answer") as HTMLDivElement;
+        if(!answerEl) return;
+        answerEl.remove();
+    }
+
+    removeCorrectBorder() {
+        let cards = document.querySelectorAll(".StudentAnswerOptions-optionCard");
+        if(!cards) return;
+
+        for(let card of cards) {
+            (card as HTMLElement).style.borderRadius = "0.5rem";
+            (card as HTMLElement).style.border = "none";
+        }
+    }
+
+    addCorrectBorder() {
+        let cards = document.querySelectorAll(".StudentAnswerOptions-optionCard");
+        if(!cards) return;
+
+        let correctId = this.currentPrompts[this.roundNumber];
+        if(!this.hasPrompts.includes(correctId)) return;
+        let cardInfo = this.terms.find(term => term.id == correctId);
+        if(!cardInfo) return;
+        
+        // match the word to the card
+        for(let card of cards) {
+            let text = card.querySelector('.StudentAnswerOption-text > div')?.textContent;
+            let bgImg = (card.querySelector('.StudentAnswerOption-image .Image-image') as HTMLElement)?.style.backgroundImage;
+            let bgImgUrl = bgImg?.slice(5, bgImg.length - 2);
+
+            let matches = true;
+
+            // determine whether the card is correct
+            if(this.promptKind == "definition") {
+                if(text != cardInfo.word) matches = false;
+            } else {
+                if(text != cardInfo.definition && cardInfo.definition != '') matches = false;
+                if(bgImgUrl != cardInfo._imageUrl && cardInfo._imageUrl != null) matches = false;
+            }
+
+            (card as HTMLElement).style.borderRadius = "0.5rem";
+            if(matches) {
+                (card as HTMLElement).style.border = "2px solid #18ab1d";
+            } else {
+                (card as HTMLElement).style.border = "2px solid #c72d0e";
+            }
+        }
     }
 
     log(...args: any[]) {
@@ -59,8 +167,12 @@ export default class Cheat {
             let newPrompts = data.terms[this.getPlayerId()]
             if(newPrompts) this.hasPrompts = newPrompts;
 
-            if(this.autoAnswering) {
+            if(this.hudInteract!.helpMode == 1) { // auto answer
                 this.answerQuestion();
+            } else if(this.hudInteract!.helpMode == 2) { // auto answer (wait)
+                setTimeout(() => {
+                    this.answerQuestion();
+                }, 1900);
             }
         })
 
@@ -86,16 +198,14 @@ export default class Cheat {
     }
 
     handleGameState(data: IGameState | IGameStateAndSet) {
-        console.log(data)
+        this.terms = data.terms;
+        this.promptKind = data.options.promptWith == 1 ? 'term' : 'definition';
 
         let playerId = this.getPlayerId();
         let playerTeam = data.teams.find(team => team.players.includes(playerId));
 
-        console.log("playerTeam", playerTeam)
-
         if(!playerTeam) return;
         let streak = playerTeam.streaks[playerTeam.streaks.length - 1];
-        console.log("streak", streak)
         if(!streak) return;
 
         this.setPrompts(streak);
@@ -114,15 +224,38 @@ export default class Cheat {
             round: this.roundNumber,
             termId: correctId
         })
-
-        console.log(this.streakNumber, this.roundNumber, correctId)
     }
 
     getPlayerId() {
-        let playerId = String((window as unknown as QuizletWindow).Quizlet.user.id);
-        if(playerId) return playerId;
+        let playerId = (window as unknown as QuizletWindow).Quizlet?.user?.id
+        if(playerId) return String(playerId);
         
         return (window as unknown as QuizletWindow).Quizlet.uid;
+    }
+
+    addUpdateObserver() {
+        let cheat = this;
+
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                if(mutation.type !== "childList") return;
+                // prevent infinite loop
+                if((mutation.target as HTMLElement).matches(".StudentPrompt, .StudentPrompt *")) return;
+
+                if(cheat.hudInteract!.helpMode == 3) { // outline correct
+                    cheat.addCorrectBorder();
+                }
+
+                if(cheat.hudInteract!.showAnswer) {
+                    // cheat.updateAnswerDisplay();
+                }
+            });
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
     }
 
     setupSocketGetting() {
@@ -135,7 +268,7 @@ export default class Cheat {
                 const addedNodes = Array.from(mutation.addedNodes);
     
                 for (let node of addedNodes) {
-                    let src;
+                    let src: string;
 
                     if(node.nodeName == "LINK") {
                         src = (node as HTMLLinkElement).href;                       
@@ -143,12 +276,15 @@ export default class Cheat {
                         src = (node as HTMLScriptElement).src;
                     } else continue;
 
-                    if(!src.includes("live_game_student")) continue;
+                    if(!src.includes("live_game_student") || !src.endsWith(".js")) continue;
 
                     // get rid of the element so it doesn't get executed
                     (node as HTMLElement).remove();
 
-                    if(cheat.alreadyIntercepted) continue;
+                    if(cheat.alreadyIntercepted) { // we have to do it here, because for some reason quizlet loads the script twice
+                        observer.disconnect();
+                        return;
+                    }
                     cheat.alreadyIntercepted = true;
         
                     // we want to manually fetch the script so we can modify it

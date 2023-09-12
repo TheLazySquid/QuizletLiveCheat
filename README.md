@@ -4,15 +4,28 @@ This is a Tampermonkey userscript that lets you instantly answer questions in Qu
 
 ## Features
 
-Right now this is pretty bare-bones. After joining a game, a hud will appear with two buttons. The hud can be toggled with "\\" (backslash).
+After joining a game, a hud will appear with several options. The hud can be toggled with "\\" (backslash).
 
-#### Answer a Question
+#### Answer Question
 
 This will answer the question you're given, provided you're the one with the answer.
 
-#### Auto Answer Questions
+#### Show Answer
 
-This will automatically answer questions as soon as they're available. Be warned: in indidual mode, this means you'll instantly win in a matter of seconds, since it ignores the cooldown you'd typically have.
+This will pop up a display with the correct answer, to use yourself or give to teammates.
+
+#### Help Mode
+
+There are 4 different help modes:
+
+1. None - Does Nothing
+2. Auto Answer (instant) - will instantly answer questions the moment they are available to answer. This has no cooldown, and will win the game in seconds.
+3. Auto Answer (wait) - will answer questions once they're ready to be answered.
+4. Outline Correct Answer - If you have the correct answer, it will outline it in green and the others in red.
+
+**Note about auto answer**:
+
+Auto answer will only activate after a question is answered, be that with the button or by hand.
 
 ## Installation
 
