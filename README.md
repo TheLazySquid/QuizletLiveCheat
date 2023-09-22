@@ -31,6 +31,4 @@ Auto answer will only activate after a question is answered, be that with the bu
 
 To install, click on [this link](https://raw.githubusercontent.com/TheLazySquid/QuizletLiveCheat/main/build/bundle.user.js) while having [Tampermonkey](https://tampermonkey.net) installed.
 
-### This script does not work on Firefox, due to limitations.
-
-Presumably, this works on all chromium based browsers, but I have only tested Chrome and Edge.
+Right now I have only tested Firefox, Edge and Chrome. If another browser doesn't work, please open an issue.
