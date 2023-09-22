@@ -8,14 +8,14 @@
 // @author      TheLazySquid
 // @updateURL   https://raw.githubusercontent.com/TheLazySquid/QuizletLiveCheat/main/build/bundle.user.js
 // @downloadURL https://raw.githubusercontent.com/TheLazySquid/QuizletLiveCheat/main/build/bundle.user.js
-// @version     0.1.0
+// @version     0.1.1
 // @license     MIT
 // @grant       none
 // ==/UserScript==
 (function () {
   'use strict';
 
-  var version = "0.1.0";
+  var version = "0.1.1";
 
   function addModifiedScript(src) {
       // we want to manually fetch the script so we can modify it

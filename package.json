@@ -1,6 +1,6 @@
 {
   "name": "quizletlive-cheat",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A userscript that lets you cheat in Quizlet Live",
   "main": "build/bundle.js",
   "type": "module",
