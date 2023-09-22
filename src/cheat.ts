@@ -1,5 +1,7 @@
 import { Socket } from "socket.io-client";
 import type { IGameState, IGameStateAndSet, IHudInteract, INewAnswer, INewStreak, IQuizletStreak, IQuizletTerm, QuizletWindow } from "./interfaces";
+import setupMutation from "./interceptors/mutationObserver";
+import setupBeforeScriptExecute from "./interceptors/beforeScriptExecute";
 
 export default class Cheat {
     alreadyIntercepted: boolean = false;
@@ -259,63 +261,10 @@ export default class Cheat {
     }
 
     setupSocketGetting() {
-        let cheat = this;
-
-        const observer = new MutationObserver(function (mutations) {
-            mutations.forEach(function (mutation) {
-                // Check if a new script element was added
-                if (mutation.type !== 'childList') return
-                const addedNodes = Array.from(mutation.addedNodes);
-    
-                for (let node of addedNodes) {
-                    let src: string;
-
-                    if(node.nodeName == "LINK") {
-                        src = (node as HTMLLinkElement).href;                       
-                    } else if(node.nodeName == "SCRIPT") {
-                        src = (node as HTMLScriptElement).src;
-                    } else continue;
-
-                    if(!src.includes("live_game_student") || !src.endsWith(".js")) continue;
-
-                    // get rid of the element so it doesn't get executed
-                    (node as HTMLElement).remove();
-
-                    if(cheat.alreadyIntercepted) { // we have to do it here, because for some reason quizlet loads the script twice
-                        observer.disconnect();
-                        return;
-                    }
-                    cheat.alreadyIntercepted = true;
-        
-                    // we want to manually fetch the script so we can modify it
-                    fetch(src)
-                        .then(response => response.text())
-                        .then(text => {
-                            const insertAfter = "j=E()((0,i.Z)(w)),"
-                            const insertText = "window.qlc.setIo(j),"
-    
-                            // find the index of "j=E()((0,i.Z)(w))," and append "window.qlc.io=j," after it
-                            const index = text.indexOf(insertAfter) + insertAfter.length;
-                            text = text.slice(0, index) + insertText + text.slice(index);
-
-                            // create a new blob with the modified text
-                            const blob = new Blob([text], { type: 'text/javascript' });
-                            const url = URL.createObjectURL(blob);
-
-                            // create a new script element with the modified url
-                            const script = document.createElement('script');
-                            script.src = url;
-                            
-                            // append the script element to the document
-                            document.head.appendChild(script);
-                        });
-                }
-            });
-        });
-        
-        observer.observe(document.documentElement, {
-            childList: true,
-            subtree: true
-        });
+        if(navigator.userAgent.includes("Firefox")) {
+            setupBeforeScriptExecute(this);
+        } else {
+            setupMutation(this);
+        }
     }
 }

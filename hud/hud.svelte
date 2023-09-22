@@ -55,13 +55,13 @@
     width: 300px;
     height: 200px;
     z-index: 999999999999;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.9);
     border-radius: 0.5em;
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;
     align-items: center;
-    color: black;
+    color: white;
 }
 
 .hud .row {

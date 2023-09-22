@@ -3,6 +3,89 @@
 
   var version = "0.1.0";
 
+  function addModifiedScript(src) {
+      // we want to manually fetch the script so we can modify it
+      fetch(src)
+          .then(response => response.text())
+          .then(text => {
+          const insertAfterRegex = /j=E\(\)\(\(0,i\.Z\)\(.\)\),/g;
+          const insertText = "window.qlc.setIo(j),";
+          // find the index of the insert after regex and append "window.qlc.io=j," after it
+          const index = text.search(insertAfterRegex) + insertAfterRegex.exec(text)[0].length;
+          text = text.slice(0, index) + insertText + text.slice(index);
+          // create a new blob with the modified text
+          const blob = new Blob([text], { type: 'text/javascript' });
+          const url = URL.createObjectURL(blob);
+          // create a new script element with the modified url
+          const script = document.createElement('script');
+          script.src = url;
+          // append the script element to the document
+          document.head.appendChild(script);
+      });
+  }
+
+  function setup$1(cheat) {
+      const observer = new MutationObserver(function (mutations) {
+          mutations.forEach(function (mutation) {
+              // Check if a new script element was added
+              if (mutation.type !== 'childList')
+                  return;
+              const addedNodes = Array.from(mutation.addedNodes);
+              for (let node of addedNodes) {
+                  let src;
+                  if (node.nodeName == "LINK") {
+                      src = node.href;
+                  }
+                  else if (node.nodeName == "SCRIPT") {
+                      src = node.src;
+                  }
+                  else
+                      continue;
+                  if (!src.includes("live_game_student") || !src.endsWith(".js"))
+                      continue;
+                  // get rid of the element so it doesn't get executed
+                  node.remove();
+                  if (cheat.alreadyIntercepted) { // we have to do it here, because for some reason quizlet loads the script twice
+                      observer.disconnect();
+                      return;
+                  }
+                  cheat.alreadyIntercepted = true;
+                  addModifiedScript(src);
+              }
+          });
+      });
+      observer.observe(document.documentElement, {
+          childList: true,
+          subtree: true
+      });
+  }
+
+  function setup(cheat) {
+      function interceptScript(e) {
+          // this is bad bad very bad
+          if (!e.srcElement)
+              return;
+          let srcEl = e.srcElement;
+          let src;
+          if (srcEl.nodeName == "LINK") {
+              src = srcEl.href;
+          }
+          else if (srcEl.nodeName == "SCRIPT") {
+              src = srcEl.src;
+          }
+          else
+              return;
+          if (!src.includes("live_game_student") || !src.endsWith(".js"))
+              return;
+          console.log('cancelled', src);
+          e.preventDefault();
+          addModifiedScript(src);
+          window.removeEventListener('beforescriptexecute', interceptScript);
+      }
+      // @ts-ignore beforescriptexecute is non-standard and only works on firefox. Fortunately, it's just firefox that need to run this script, so we're good.
+      window.addEventListener('beforescriptexecute', interceptScript);
+  }
+
   class Cheat {
       constructor() {
           this.alreadyIntercepted = false;
@@ -236,57 +319,12 @@
           });
       }
       setupSocketGetting() {
-          let cheat = this;
-          const observer = new MutationObserver(function (mutations) {
-              mutations.forEach(function (mutation) {
-                  // Check if a new script element was added
-                  if (mutation.type !== 'childList')
-                      return;
-                  const addedNodes = Array.from(mutation.addedNodes);
-                  for (let node of addedNodes) {
-                      let src;
-                      if (node.nodeName == "LINK") {
-                          src = node.href;
-                      }
-                      else if (node.nodeName == "SCRIPT") {
-                          src = node.src;
-                      }
-                      else
-                          continue;
-                      if (!src.includes("live_game_student") || !src.endsWith(".js"))
-                          continue;
-                      // get rid of the element so it doesn't get executed
-                      node.remove();
-                      if (cheat.alreadyIntercepted) { // we have to do it here, because for some reason quizlet loads the script twice
-                          observer.disconnect();
-                          return;
-                      }
-                      cheat.alreadyIntercepted = true;
-                      // we want to manually fetch the script so we can modify it
-                      fetch(src)
-                          .then(response => response.text())
-                          .then(text => {
-                          const insertAfter = "j=E()((0,i.Z)(w)),";
-                          const insertText = "window.qlc.setIo(j),";
-                          // find the index of "j=E()((0,i.Z)(w))," and append "window.qlc.io=j," after it
-                          const index = text.indexOf(insertAfter) + insertAfter.length;
-                          text = text.slice(0, index) + insertText + text.slice(index);
-                          // create a new blob with the modified text
-                          const blob = new Blob([text], { type: 'text/javascript' });
-                          const url = URL.createObjectURL(blob);
-                          // create a new script element with the modified url
-                          const script = document.createElement('script');
-                          script.src = url;
-                          // append the script element to the document
-                          document.head.appendChild(script);
-                      });
-                  }
-              });
-          });
-          observer.observe(document.documentElement, {
-              childList: true,
-              subtree: true
-          });
+          if (navigator.userAgent.includes("Firefox")) {
+              setup();
+          }
+          else {
+              setup$1(this);
+          }
       }
   }
 
@@ -865,7 +903,7 @@
   const { window: window_1 } = globals;
 
   function add_css(target) {
-  	append_styles(target, "svelte-7fhyyi", ".hud.svelte-7fhyyi.svelte-7fhyyi{position:absolute;top:10px;left:10px;width:300px;height:200px;z-index:999999999999;background-color:rgba(0, 0, 0, 0.5);border-radius:0.5em;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;color:black}.hud.svelte-7fhyyi .row.svelte-7fhyyi{display:flex;flex-direction:row;justify-content:center;align-items:center}.hud.svelte-7fhyyi .answer.svelte-7fhyyi{width:70%;height:50px;font-family:Verdana, Geneva, Tahoma, sans-serif;font-size:1em;border-radius:0.5em;background-color:white;color:black;border:none;transition:transform 0.3s ease}.hud.svelte-7fhyyi .answer.svelte-7fhyyi:active{transform:scale(0.93)}.hud.svelte-7fhyyi input[type=checkbox].svelte-7fhyyi{width:20px;height:20px;margin-left:10px}.hud.svelte-7fhyyi .help.svelte-7fhyyi{display:flex;flex-direction:column;align-items:center}.hud.svelte-7fhyyi .helpControl button.svelte-7fhyyi{width:25px;height:25px;border-radius:0.5em;background-color:white;border:none;transition:transform 0.3s ease;margin:5px;color:black}");
+  	append_styles(target, "svelte-17j758w", ".hud.svelte-17j758w.svelte-17j758w{position:absolute;top:10px;left:10px;width:300px;height:200px;z-index:999999999999;background-color:rgba(0, 0, 0, 0.9);border-radius:0.5em;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;color:white}.hud.svelte-17j758w .row.svelte-17j758w{display:flex;flex-direction:row;justify-content:center;align-items:center}.hud.svelte-17j758w .answer.svelte-17j758w{width:70%;height:50px;font-family:Verdana, Geneva, Tahoma, sans-serif;font-size:1em;border-radius:0.5em;background-color:white;color:black;border:none;transition:transform 0.3s ease}.hud.svelte-17j758w .answer.svelte-17j758w:active{transform:scale(0.93)}.hud.svelte-17j758w input[type=checkbox].svelte-17j758w{width:20px;height:20px;margin-left:10px}.hud.svelte-17j758w .help.svelte-17j758w{display:flex;flex-direction:column;align-items:center}.hud.svelte-17j758w .helpControl button.svelte-17j758w{width:25px;height:25px;border-radius:0.5em;background-color:white;border:none;transition:transform 0.3s ease;margin:5px;color:black}");
   }
 
   // (28:0) {#if visible}
@@ -917,16 +955,16 @@
   			t10 = space();
   			button2 = element("button");
   			button2.textContent = ">";
-  			attr(button0, "class", "answer svelte-7fhyyi");
+  			attr(button0, "class", "answer svelte-17j758w");
   			attr(input, "type", "checkbox");
-  			attr(input, "class", "svelte-7fhyyi");
-  			attr(div1, "class", "row svelte-7fhyyi");
-  			attr(button1, "class", "svelte-7fhyyi");
+  			attr(input, "class", "svelte-17j758w");
+  			attr(div1, "class", "row svelte-17j758w");
+  			attr(button1, "class", "svelte-17j758w");
   			attr(div3, "class", "display");
-  			attr(button2, "class", "svelte-7fhyyi");
-  			attr(div4, "class", "row helpControl svelte-7fhyyi");
-  			attr(div5, "class", "help svelte-7fhyyi");
-  			attr(div6, "class", "hud svelte-7fhyyi");
+  			attr(button2, "class", "svelte-17j758w");
+  			attr(div4, "class", "row helpControl svelte-17j758w");
+  			attr(div5, "class", "help svelte-17j758w");
+  			attr(div6, "class", "hud svelte-17j758w");
   		},
   		m(target, anchor) {
   			insert(target, div6, anchor);
