@@ -8,11 +8,12 @@
       fetch(src)
           .then(response => response.text())
           .then(text => {
-          const insertAfterRegex = /j=E\(\)\(\(0,i\.Z\)\(.\)\),/g;
-          const insertText = "window.qlc.setIo(j),";
-          // find the index of the insert after regex and append "window.qlc.io=j," after it
-          const index = text.search(insertAfterRegex) + insertAfterRegex.exec(text)[0].length;
-          text = text.slice(0, index) + insertText + text.slice(index);
+          const insertBeforeRegex = /.\.on\("reconnect_failed\"/g;
+          const insertIndex = text.search(insertBeforeRegex);
+          if (insertIndex == -1)
+              return alert("Something went wrong! This likely means Quizlet made an update to their code. Please open an issue on GitHub.");
+          const insertText = `window.qlc.setIo(${text[insertIndex]}),`;
+          text = text.slice(0, insertIndex) + insertText + text.slice(insertIndex);
           // create a new blob with the modified text
           const blob = new Blob([text], { type: 'text/javascript' });
           const url = URL.createObjectURL(blob);
