@@ -1,5 +1,7 @@
 # Quizlet Live Cheat
 
+### This script is currently broken. I'm going to try to fix this, but no guarantees. If you are reading this after 2024, assume I forgot.
+
 This is a Tampermonkey userscript that lets you instantly answer questions in Quizlet live.
 
 ## Features
