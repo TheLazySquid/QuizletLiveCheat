@@ -1,46 +1,39 @@
-<script>
-    let visible = true
+<script lang="ts">
+    import { createEventDispatcher } from "svelte";
 
-    let exposes = {
-        answerQuestion: undefined,
-        onHelpModeChange: undefined,
-        onShowAnswerChange: undefined,
-        helpMode: 0,
-        showAnswer: false
-    }
-
+    let visible = true;
     const helpModes = ['None', 'Auto Answer (instant)', 'Auto Answer (wait)', 'Outline Correct Answer']
+    let helpMode = 0;
 
-    const changeHelpMode = (delta) => {
-        exposes.helpMode += delta
-        if(exposes.helpMode < 0) exposes.helpMode += helpModes.length
-        exposes.helpMode = exposes.helpMode % helpModes.length
-        exposes.onHelpModeChange?.(exposes.helpMode)
+    let dispatch = createEventDispatcher();
+
+    function changeHelpMode(change: number) {
+        helpMode += change;
+        if (helpMode < 0) helpMode += helpModes.length;
+        helpMode %= helpModes.length;
+
+        dispatch('helpMode', helpMode);
     }
 
-    window.qlc.addHudInteract(exposes);
+    function onKeyDown(event: KeyboardEvent) {
+        if(event.key !== '\\') return;
+
+        visible = !visible;
+    }
 </script>
 
-<svelte:window on:keydown={e => {
-    if(e.key === '\\') visible = !visible
-}} />
+<svelte:window on:keydown={onKeyDown} />
 
 {#if visible}
     <div class="hud">
-        <button on:click={exposes.answerQuestion?.()} class="answer">Answer Question</button>
-        <div class="row">
-            <div>
-                Show Answer
-            </div>
-            <input type="checkbox" bind:checked={exposes.showAnswer} on:change={() => exposes.onShowAnswerChange?.(exposes.showAnswer)} />
-        </div>
+        <button on:click={() => dispatch('answer')} class="answer">Answer Question</button>
         <div class="help">
             <div>
                 Help Mode
             </div>
             <div class="row helpControl">
                 <button on:click={() => changeHelpMode(-1)}>&lt;</button>
-                <div class="display">{ helpModes[exposes.helpMode] }</div>
+                <div class="display">{ helpModes[helpMode] }</div>
                 <button on:click={() => changeHelpMode(1)}>&gt;</button>
             </div>
         </div>
@@ -67,8 +60,9 @@
 .hud .row {
     display: flex;
     flex-direction: row;
-    justify-content: center;
-    align-items: center;
+    justify-content: space-between;
+    align-items: space-between;
+    width: 100%;
 }
 
 .hud .answer {
@@ -87,16 +81,11 @@
     transform: scale(0.93);
 }
 
-.hud input[type=checkbox] {
-    width: 20px;
-    height: 20px;
-    margin-left: 10px;
-}
-
 .hud .help {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 85%;
 }
 
 .hud .helpControl button {

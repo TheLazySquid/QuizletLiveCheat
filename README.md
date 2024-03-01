@@ -1,7 +1,5 @@
 # Quizlet Live Cheat
 
-### This script is currently broken. I'm going to try to fix this, but no guarantees. If you are reading this after 2024, assume I forgot.
-
 This is a Tampermonkey userscript that lets you instantly answer questions in Quizlet live.
 
 ## Features
@@ -11,10 +9,6 @@ After joining a game, a hud will appear with several options. The hud can be tog
 #### Answer Question
 
 This will answer the question you're given, provided you're the one with the answer.
-
-#### Show Answer
-
-This will pop up a display with the correct answer, to use yourself or give to teammates.
 
 #### Help Mode
 
@@ -32,5 +26,3 @@ Auto answer will only activate after a question is answered, be that with the bu
 ## Installation
 
 To install, click on [this link](https://raw.githubusercontent.com/TheLazySquid/QuizletLiveCheat/main/build/bundle.user.js) while having [Tampermonkey](https://tampermonkey.net) installed.
-
-Right now I have only tested Firefox, Edge and Chrome. If another browser doesn't work, please open an issue.

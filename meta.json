@@ -1,6 +1,7 @@
 {
     "name": "Quizlet Live Cheat",
     "namespace": "https://github.com/TheLazySquid/QuizletLiveCheat",
+    "grant": "unsafeWindow",
     "match": [
         "https://quizlet.com/live*"
     ],
