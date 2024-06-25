@@ -25,4 +25,5 @@ Auto answer will only activate after a question is answered, be that with the bu
 
 ## Installation
 
-To install, click on [this link](https://raw.githubusercontent.com/TheLazySquid/QuizletLiveCheat/main/build/bundle.user.js) while having [Tampermonkey](https://tampermonkey.net) installed.
+1. Install [ViolentMonkey](https://violentmonkey.github.io/get-it/) for your browser.
+2. Click on [this link](https://raw.githubusercontent.com/TheLazySquid/QuizletLiveCheat/main/build/bundle.user.js).
